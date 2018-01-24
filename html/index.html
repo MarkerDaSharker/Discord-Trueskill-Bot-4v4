@@ -1,0 +1,160 @@
+
+<script src='js/sql.js'></script>
+
+<style>
+div>table {
+  float: left
+}
+html{
+	background: #000;
+}
+</style>
+<style>
+table.blueTable {
+  border: 1px solid #1C6EA4;
+  background-color: #EEEEEE;
+  width: 80%;
+  height: 50%;
+  text-align: center;
+  border-collapse: collapse;
+}
+table.blueTable td, table.blueTable th {
+  border: 1px solid #AAAAAA;
+  padding: 3px 2px;
+}
+table.blueTable tbody td {
+  font-size: 13px;
+}
+table.blueTable tr:nth-child(even) {
+  background: #D0E4F5;
+}
+table.blueTable thead {
+  background: #1C6EA4;
+  background: -moz-linear-gradient(top, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
+  background: -webkit-linear-gradient(top, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
+  background: linear-gradient(to bottom, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
+  border-bottom: 2px solid #444444;
+}
+table.blueTable thead th {
+  font-size: 15px;
+  font-weight: bold;
+  color: #FFFFFF;
+  text-align: center;
+  border-left: 2px solid #D0E4F5;
+}
+table.blueTable thead th:first-child {
+  border-left: none;
+}
+
+table.blueTable tfoot {
+  font-size: 14px;
+  font-weight: bold;
+  color: #FFFFFF;
+  background: #D0E4F5;
+  background: -moz-linear-gradient(top, #dcebf7 0%, #d4e6f6 66%, #D0E4F5 100%);
+  background: -webkit-linear-gradient(top, #dcebf7 0%, #d4e6f6 66%, #D0E4F5 100%);
+  background: linear-gradient(to bottom, #dcebf7 0%, #d4e6f6 66%, #D0E4F5 100%);
+  border-top: 2px solid #444444;
+}
+table.blueTable tfoot td {
+  font-size: 14px;
+}
+table.blueTable tfoot .links {
+  text-align: right;
+}
+table.blueTable tfoot .links a{
+  display: inline-block;
+  background: #1C6EA4;
+  color: #FFFFFF;
+  padding: 2px 8px;
+  border-radius: 5px;
+}
+#Titles {
+color: rgba(255,255,255,.3);
+font-size: 32;
+text-shadow: rgba(255,255,255,.5) 0 0 15px, rgba(255,255,255,.5) 0 0 10px;}
+</style>
+<TABLE BORDER=0 width = 100%>
+<TR>
+<TD valign="top" align="center">
+<div id="Titles" size=30%>Players</div>
+<table id="players" class="blueTable">
+	<tr>
+		<th>Rank</th>
+		<th>Name</th>
+		<th>ELO</th>
+		<th>Wins</th>
+		<th>Losses</th>
+	</th>
+</table>
+
+</TD>
+<TD valign="top" align="center">
+<div id="Titles">Games</div>
+<table id="Games" class="blueTable">
+	<tr>
+		<th>Number</th>
+		<th colspan="4">Team 1</th>
+		<th colspan="2">Score</th>
+		<th colspan="4">Team 2</th>
+	</th>
+</table>
+</TD>
+</TR>
+</table>
+<script>
+	tbl  = document.getElementById("players");
+	tbl2 = document.getElementById("Games");
+
+var xhr = new XMLHttpRequest();
+xhr.open('GET', 'elo.db', true);
+xhr.responseType = 'arraybuffer';
+
+xhr.onload = function(e) {
+	var dbpath = new Uint8Array(this.response);
+    var db = new SQL.Database(dbpath);
+
+	
+    var stmt = db.prepare("SELECT name,elo, win,loss FROM players where win > 0 or loss > 0 ORDER BY elo desc");
+	var count = 1
+    while(stmt.step()) { //
+		var tr = tbl.insertRow();
+        var row = stmt.getAsObject();
+		tr.insertCell().innerHTML = count;
+		count = count + 1;
+		for(x in row){
+			console.log(row[x])
+			tr.insertCell().innerHTML = row[x];
+		}
+    }
+	players = tbl;
+	
+		var dbpath = new Uint8Array(this.response);
+    var db = new SQL.Database(dbpath);
+
+	
+    var stmt = db.prepare("SELECT ID,p1,p2,p3,p4,s1,s2,p5,p6,p7,p8 FROM games WHERE ID > 0 ORDER BY ID desc;");
+
+    while(stmt.step()) { //
+		var tr = tbl2.insertRow();
+        var row = stmt.getAsObject();
+		for(x in row){
+			console.log(x)
+			if(x == "ID" || x == "s1" || x == "s2"){
+				tr.insertCell().innerHTML = row[x];
+			}else{
+				var sqlstring = "SELECT name from players where ID = \"" + row[x] + "\";";
+				var stmt2 = db.prepare(sqlstring);
+				while(stmt2.step()){
+					IDtoName = stmt2.getAsObject();
+					tr.insertCell().innerHTML = IDtoName.name;
+				}
+			}
+			
+				
+		}
+    }
+}
+xhr.send();
+
+</script>
