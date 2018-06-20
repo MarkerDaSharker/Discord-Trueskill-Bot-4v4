@@ -54,6 +54,7 @@ async def register(ctx):
         if mon == None:
             c.execute('INSERT INTO players VALUES(?, ?, 0, 0, 1000, NULL)', [A,B])
             await client.say("You are registered!")
+            await client.change_nickname(ctx.message.author, B + " (1000)")
         else:
             await client.say("You have already registered!")
     
@@ -65,7 +66,7 @@ async def lobby(ctx):
     global PLAYERS, GAME
     conn = sqlite3.connect(db_path)
 
-    c = conn.cursor()    
+    c = conn.cursor()
     
     if ctx.message.channel.id == general.id:
         if GAME:
@@ -83,9 +84,9 @@ async def lobby(ctx):
                     
                 await client.say(lobbystr)
             elif ctx.message.channel.id == general.id:
-                await client.say("No lobby!")        
+                await client.say("No lobby!")
         else:
-            await client.say("No game! Please say \"-start\"")  
+            await client.say("No game! Please say \"-start\"")
             
     conn.close()
     
@@ -96,7 +97,7 @@ async def join(ctx):
     
     conn = sqlite3.connect(db_path)
 
-    c = conn.cursor()    
+    c = conn.cursor()
     
     c.execute("SELECT currentg FROM players WHERE ID = ?", [t])
     
@@ -113,7 +114,7 @@ async def join(ctx):
     conn.close()
     
 @client.command(pass_context=True)
-async def unjoin(ctx):
+async def leave(ctx):
     global PLAYERS
     if ctx.message.channel.id == general.id:
         if GAME:
@@ -322,6 +323,11 @@ async def r(ctx):
                         if not draw:
                             c.execute("UPDATE players SET elo = ? where ID = ?", [int(ELOS[k]), t])
                             
+                            c.execute("SELECT name FROM players where ID = ?", [t])
+                            namen = c.fetchone()[0]
+                            
+                            await client.change_nickname(ctx.message.author, namen + " ("+ str(ELOS[k]) + ")")
+                            
                             if t1g and k < 4:
                                 c.execute("UPDATE players SET win = win + 1 where ID = ?", [t])
                             elif k >= 4 and not t1g:
@@ -353,4 +359,29 @@ async def r(ctx):
     except:
         True
        
+@client.command(pass_context=True)
+async def rename(ctx):
+    conn = sqlite3.connect(db_path)
+
+    c = conn.cursor()
+    
+    A = str(ctx.message.author.id)
+    B = str(ctx.message.author.name)
+    c.execute("SELECT elo FROM players WHERE ID = ?", [A])
+    mon = c.fetchone()
+    if ctx.message.channel.id == general.id:
+        if len(str(ctx.message.content)) < (33-7):
+            c.execute("UPDATE players name = ? where ID = ?", [str(ctx.message.content), A])
+            c.execute("SELECT elo FROM players where ID = ?", [A])
+            elon = c.fetchone()[0]
+            
+            await client.change_nickname(ctx.message.author, ctx.message.content + " ("+ str(elon) + ")")
+        else:
+            await client.say("Invalid Length.")
+        
+    
+    conn.commit()
+    conn.close()
+
+
 client.run("") #client auth key (found in discord api)
